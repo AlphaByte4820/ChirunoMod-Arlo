@@ -200,6 +200,8 @@ jobs:
           find /opt/devkitpro/portlibs -name 'libturbojpeg*' -print
 
       - name: Install makerom and bannertool
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/makerom-release
           cd /tmp/makerom-release
