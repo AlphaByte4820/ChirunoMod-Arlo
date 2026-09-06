@@ -135,7 +135,29 @@ jobs:
           make zlib
           sudo -E make install-zlib
 
-          make libjpeg-turbo LIBJPEGTURBO_CONFIGURE_ARGS="--without-simd"
+          python3 - <<'PATCH'
+          p = "Makefile"
+
+          with open(p, "r") as f:
+              m = f.read()
+
+          old = "./configure --prefix=$(PORTLIBS_PATH)/armv6k --host=arm-none-eabi --disable-shared --enable-static"
+          new = "./configure --prefix=$(PORTLIBS_PATH)/armv6k --host=arm-none-eabi --disable-shared --enable-static --without-simd"
+
+          if old not in m:
+              raise SystemExit("JPEG configure line not found")
+
+          m = m.replace(old, new, 1)
+
+          with open(p, "w") as f:
+              f.write(m)
+
+          print("libjpeg-turbo SIMD disabled in Makefile")
+          PATCH
+
+          grep -n -A6 -B3 "LIBJPEGTURBO" Makefile | head -40
+
+          make libjpeg-turbo
           sudo -E make install-libjpeg-turbo
 
           echo "Checking turbojpeg:"
