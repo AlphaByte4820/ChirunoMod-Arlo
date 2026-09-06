@@ -38,6 +38,12 @@ jobs:
                   )
                   found_poll = True
 
+              if "else if(pollsock(sock, POLLERR) == POLLERR)" in line:
+                  lines[i] = line.replace(
+                      "else if(pollsock(sock, POLLERR) == POLLERR)",
+                      "if(false)"
+                  )
+
               if "int cli = accept(sock, (struct sockaddr*)&sai, &sizeof_sai);" in line:
                   indent = line[:len(line) - len(line.lstrip())]
                   lines[i] = (
