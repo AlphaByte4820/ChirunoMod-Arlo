@@ -232,11 +232,18 @@ jobs:
           chmod +x "$MAKEROM"
           sudo cp "$MAKEROM" /usr/local/bin/makerom
 
-          git clone --depth 1 https://github.com/Epicpkmn11/bannertool.git /tmp/bannertool
-          cd /tmp/bannertool
-          cmake -B build
-          cmake --build build -j2
-          sudo cp build/bannertool /usr/local/bin/bannertool
+          cd /tmp
+
+          wget -q             https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip             -O bannertool.zip
+
+          rm -rf /tmp/bannertool-bin
+          mkdir -p /tmp/bannertool-bin
+
+          unzip -q bannertool.zip -d /tmp/bannertool-bin
+
+          sudo cp /tmp/bannertool-bin/linux-x86_64/bannertool             /usr/local/bin/bannertool
+
+          sudo chmod +x /usr/local/bin/bannertool
 
           echo "Packaging tools:"
           which makerom
