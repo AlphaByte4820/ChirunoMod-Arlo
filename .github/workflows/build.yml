@@ -135,7 +135,7 @@ jobs:
           make zlib
           sudo -E make install-zlib
 
-          make libjpeg-turbo
+          make libjpeg-turbo LIBJPEGTURBO_CONFIGURE_ARGS="--without-simd"
           sudo -E make install-libjpeg-turbo
 
           echo "Checking turbojpeg:"
