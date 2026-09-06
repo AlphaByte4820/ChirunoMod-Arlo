@@ -199,6 +199,25 @@ jobs:
           find /opt/devkitpro/portlibs -name turbojpeg.h -print
           find /opt/devkitpro/portlibs -name 'libturbojpeg*' -print
 
+      - name: Install makerom and bannertool
+        run: |
+          git clone --depth 1 https://github.com/3DSGuy/Project_CTR.git /tmp/Project_CTR
+          cd /tmp/Project_CTR/makerom
+          make -j2
+          sudo cp makerom /usr/local/bin/makerom
+
+          git clone --depth 1 https://github.com/Epicpkmn11/bannertool.git /tmp/bannertool
+          cd /tmp/bannertool
+          cmake -B build
+          cmake --build build -j2
+          sudo cp build/bannertool /usr/local/bin/bannertool
+
+          echo "Packaging tools:"
+          which makerom
+          which bannertool
+          makerom -h >/dev/null || true
+          bannertool --help >/dev/null || true
+
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
