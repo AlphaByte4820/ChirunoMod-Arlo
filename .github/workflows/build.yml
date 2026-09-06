@@ -168,8 +168,26 @@ jobs:
 
           grep -n -A6 -B3 "LIBJPEGTURBO" Makefile | head -40
 
-          make libjpeg-turbo
-          sudo -E make install-libjpeg-turbo
+          make libjpeg-turbo || true
+
+          cd libjpeg-turbo-1.4.2
+
+          make libjpeg.la libturbojpeg.la
+
+          sudo mkdir -p /opt/devkitpro/portlibs/armv6k/include
+          sudo mkdir -p /opt/devkitpro/portlibs/armv6k/lib
+
+          sudo cp jpeglib.h jerror.h jmorecfg.h turbojpeg.h             /opt/devkitpro/portlibs/armv6k/include/
+
+          sudo cp .libs/libjpeg.a             /opt/devkitpro/portlibs/armv6k/lib/
+
+          sudo cp .libs/libturbojpeg.a             /opt/devkitpro/portlibs/armv6k/lib/
+
+          cd ..
+
+          echo "Checking TurboJPEG install:"
+          ls -l /opt/devkitpro/portlibs/armv6k/include/turbojpeg.h
+          ls -l /opt/devkitpro/portlibs/armv6k/lib/libturbojpeg.a
 
           echo "Checking turbojpeg:"
           find /opt/devkitpro/portlibs -name turbojpeg.h -print
