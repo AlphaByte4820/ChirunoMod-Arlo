@@ -120,6 +120,28 @@ jobs:
           arm-none-eabi-gcc --version
           ls -la /opt/devkitpro/libctru
 
+      - name: Install legacy 3DS portlibs
+        run: |
+          git clone --depth 1 \
+            https://github.com/LoveMHz/3DS-Portlibs.git \
+            /tmp/3ds-portlibs
+
+          cd /tmp/3ds-portlibs
+
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          export PATH="$DEVKITARM/bin:$PATH"
+
+          make zlib
+          sudo -E make install-zlib
+
+          make libjpeg-turbo
+          sudo -E make install-libjpeg-turbo
+
+          echo "Checking turbojpeg:"
+          find /opt/devkitpro/portlibs -name turbojpeg.h -print
+          find /opt/devkitpro/portlibs -name 'libturbojpeg*' -print
+
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
