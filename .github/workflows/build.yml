@@ -145,6 +145,10 @@ jobs:
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
+          # Old libjpeg-turbo 1.4.2 collides with newer devkitARM stdlib random()
+          # Disable ARM SIMD for this legacy JPEG build; ChirunoMod does not need
+          # the old jsimd_arm path for our networking test.
+          sed -i 's/^JSIMD_ARM=.*/JSIMD_ARM=/' Makefile 2>/dev/null || true
           make -j2
 
       - name: Show build output
