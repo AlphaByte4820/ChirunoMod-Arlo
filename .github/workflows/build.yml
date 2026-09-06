@@ -139,20 +139,31 @@ jobs:
           p = "Makefile"
 
           with open(p, "r") as f:
-              m = f.read()
+              lines = f.readlines()
 
-          old = "./configure --prefix=$(PORTLIBS_PATH)/armv6k --host=arm-none-eabi --disable-shared --enable-static"
-          new = "./configure --prefix=$(PORTLIBS_PATH)/armv6k --host=arm-none-eabi --disable-shared --enable-static --without-simd"
+          inside_jpeg = False
+          changed = False
 
-          if old not in m:
-              raise SystemExit("JPEG configure line not found")
+          for i, line in enumerate(lines):
+              if line.startswith("$(LIBJPEGTURBO):"):
+                  inside_jpeg = True
+                  continue
 
-          m = m.replace(old, new, 1)
+              if inside_jpeg and line.startswith("$(") and not line.startswith("$(LIBJPEGTURBO)"):
+                  break
+
+              if inside_jpeg and "./configure" in line:
+                  lines[i] = line.rstrip("\n") + " --without-simd\n"
+                  changed = True
+                  break
+
+          if not changed:
+              raise SystemExit("Could not locate libjpeg-turbo configure command")
 
           with open(p, "w") as f:
-              f.write(m)
+              f.writelines(lines)
 
-          print("libjpeg-turbo SIMD disabled in Makefile")
+          print("libjpeg-turbo SIMD disabled")
           PATCH
 
           grep -n -A6 -B3 "LIBJPEGTURBO" Makefile | head -40
