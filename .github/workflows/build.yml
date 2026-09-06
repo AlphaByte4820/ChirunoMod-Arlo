@@ -82,16 +82,37 @@ jobs:
 
       - name: Install libctru 1.2.1
         run: |
-          sudo mkdir -p /opt/devkitpro/libctru
           wget -q \
             "https://wii.leseratte10.de/devkitPro/libctru/2017/libctru-1.2.1.tar.bz2" \
             -O /tmp/libctru.tar.bz2
 
-          sudo tar -xjf /tmp/libctru.tar.bz2 \
-            -C /opt/devkitpro/libctru \
-            --strip-components=1 || \
-          sudo tar -xjf /tmp/libctru.tar.bz2 \
-            -C /opt/devkitpro/libctru
+          echo "Archive layout:"
+          tar -tjf /tmp/libctru.tar.bz2 | head -30
+
+          rm -rf /tmp/libctru-extract
+          mkdir -p /tmp/libctru-extract
+
+          tar -xjf /tmp/libctru.tar.bz2 -C /tmp/libctru-extract
+
+          sudo rm -rf /opt/devkitpro/libctru
+          sudo mkdir -p /opt/devkitpro/libctru
+
+          CTROOT="$(find /tmp/libctru-extract -type f -name 3ds.h -printf '%h\n' | head -1)"
+
+          if [ -z "$CTROOT" ]; then
+            echo "ERROR: 3ds.h not found in archive"
+            find /tmp/libctru-extract -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+
+          echo "Found 3ds.h in: $CTROOT"
+
+          CTBASE="$(dirname "$CTROOT")"
+          sudo cp -a "$CTBASE"/. /opt/devkitpro/libctru/
+
+          echo "Installed libctru:"
+          ls -la /opt/devkitpro/libctru/include/3ds.h
+          ls -la /opt/devkitpro/libctru/lib
 
       - name: Verify legacy compiler
         run: |
