@@ -63,6 +63,47 @@ jobs:
           print("Arlo socket patch applied")
           PY
 
+      - name: Add Arlo socket diagnostics
+        run: |
+          python3 - <<'PY2'
+          p = "ChirunoMod/soos/main.cpp"
+
+          with open(p, "r") as f:
+              s = f.read()
+
+          s = s.replace(
+              "sock = r;",
+              """sock = r;
+              printf("ARLODBG socket=%i errno=%i %s\\n", sock, errno, strerror(errno));""",
+              1
+          )
+
+          old_bind = """if(bind(sock, (struct sockaddr*)&sao, sizeof(sao)) < 0)"""
+          new_bind = """int arlo_bind_ret = bind(sock, (struct sockaddr*)&sao, sizeof(sao));
+              printf("ARLODBG bind=%i errno=%i %s\\n", arlo_bind_ret, errno, strerror(errno));
+              if(arlo_bind_ret < 0)"""
+
+          if old_bind not in s:
+              raise SystemExit("BIND TARGET NOT FOUND")
+
+          s = s.replace(old_bind, new_bind, 1)
+
+          old_listen = """if(listen(sock, 1) < 0)"""
+          new_listen = """int arlo_listen_ret = listen(sock, 1);
+                  printf("ARLODBG listen=%i errno=%i %s\\n", arlo_listen_ret, errno, strerror(errno));
+                  if(arlo_listen_ret < 0)"""
+
+          if old_listen not in s:
+              raise SystemExit("LISTEN TARGET NOT FOUND")
+
+          s = s.replace(old_listen, new_listen, 1)
+
+          with open(p, "w") as f:
+              f.write(s)
+
+          print("ARLO SOCKET DIAGNOSTICS ADDED")
+          PY2
+
       - name: Show patched section
         run: |
           sed -n '2190,2210p' ChirunoMod/soos/main.cpp
