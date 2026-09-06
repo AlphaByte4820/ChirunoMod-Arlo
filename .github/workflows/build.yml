@@ -1,0 +1,62 @@
+name: Build Arlo ChirunoMod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout build repo
+        uses: actions/checkout@v4
+
+      - name: Clone ChirunoMod v0.2.2
+        run: |
+          git clone --branch v0.2.2 --depth 1 \
+            https://github.com/ChainSwordCS/ChirunoMod.git \
+            ChirunoMod
+
+      - name: Apply Arlo Old3DS socket test
+        run: |
+          python3 - <<'PY'
+          p = "ChirunoMod/soos/main.cpp"
+
+          with open(p, "r") as f:
+              lines = f.readlines()
+
+          found_poll = False
+          found_accept = False
+
+          for i, line in enumerate(lines):
+              if "else if(pollsock(sock, POLLIN) == POLLIN)" in line:
+                  lines[i] = line.replace(
+                      "else if(pollsock(sock, POLLIN) == POLLIN)",
+                      "else"
+                  )
+                  found_poll = True
+
+              if "int cli = accept(sock, (struct sockaddr*)&sai, &sizeof_sai);" in line:
+                  indent = line[:len(line) - len(line.lstrip())]
+                  lines[i] = (
+                      indent + "sizeof_sai = sizeof(sai);\n" +
+                      indent + "int cli = accept(sock, (struct sockaddr*)&sai, &sizeof_sai);\n"
+                  )
+                  found_accept = True
+
+          if not found_poll or not found_accept:
+              raise SystemExit(
+                  f"Patch target missing: pollsock={found_poll}, accept={found_accept}"
+              )
+
+          with open(p, "w") as f:
+              f.writelines(lines)
+
+          print("Arlo socket patch applied")
+          PY
+
+      - name: Show patched section
+        run: |
+          sed -n '2190,2210p' ChirunoMod/soos/main.cpp
