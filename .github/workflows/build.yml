@@ -269,7 +269,7 @@ jobs:
       - name: Upload patched CIA
         uses: actions/upload-artifact@v4
         with:
-          name: ChirunoMod-Arlo-Old3DS-test
+          name: ChirunoMod-Arlo-Old3DS-test-${{ github.run_number }}
           path: ChirunoMod/ChirunoMod.cia
           if-no-files-found: error
 
