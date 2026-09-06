@@ -201,10 +201,34 @@ jobs:
 
       - name: Install makerom and bannertool
         run: |
-          git clone --depth 1 https://github.com/3DSGuy/Project_CTR.git /tmp/Project_CTR
-          cd /tmp/Project_CTR/makerom
-          make -j2
-          sudo cp makerom /usr/local/bin/makerom
+          mkdir -p /tmp/makerom-release
+          cd /tmp/makerom-release
+
+          ASSET="$(gh release view makerom-v0.19.0             --repo 3DSGuy/Project_CTR             --json assets             -q '.assets[].name' | grep -Ei 'linux|ubuntu' | head -1)"
+
+          echo "Using makerom asset: $ASSET"
+
+          if [ -z "$ASSET" ]; then
+            echo "Available assets:"
+            gh release view makerom-v0.19.0               --repo 3DSGuy/Project_CTR               --json assets               -q '.assets[].name'
+            exit 1
+          fi
+
+          gh release download makerom-v0.19.0             --repo 3DSGuy/Project_CTR             --pattern "$ASSET"
+
+          unzip -o "$ASSET" >/dev/null 2>&1 || true
+          tar -xf "$ASSET" >/dev/null 2>&1 || true
+
+          MAKEROM="$(find . -type f -name makerom | head -1)"
+
+          if [ -z "$MAKEROM" ]; then
+            echo "makerom binary not found after extraction"
+            find . -maxdepth 3 -type f -print
+            exit 1
+          fi
+
+          chmod +x "$MAKEROM"
+          sudo cp "$MAKEROM" /usr/local/bin/makerom
 
           git clone --depth 1 https://github.com/Epicpkmn11/bannertool.git /tmp/bannertool
           cd /tmp/bannertool
