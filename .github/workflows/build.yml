@@ -134,26 +134,21 @@ jobs:
           with open(p) as f:
               s = f.read()
 
-          old = """struct sockaddr_in sao;
-            sao.sin_family = AF_INET;
-            sao.sin_addr.s_addr = htonl(INADDR_ANY);
-            sao.sin_port = htons(port);"""
+          target = "struct sockaddr_in sao;"
 
-          new = """struct sockaddr_in sao;
-            memset(&sao, 0, sizeof(sao));
-            sao.sin_family = AF_INET;
-            sao.sin_addr.s_addr = htonl(INADDR_ANY);
-            sao.sin_port = htons(port);"""
+          if target not in s:
+              raise SystemExit("ARLO: sockaddr declaration not found")
 
-          if old not in s:
-              raise SystemExit("ARLO: sockaddr target not found")
-
-          s = s.replace(old, new, 1)
+          s = s.replace(
+              target,
+              target + "\n            memset(&sao, 0, sizeof(sao));",
+              1
+          )
 
           with open(p, "w") as f:
               f.write(s)
 
-          print("ARLO: sockaddr zeroed and bound to INADDR_ANY")
+          print("ARLO: sockaddr zero initialization inserted")
           PY2
 
       - name: Show patched section
