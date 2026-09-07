@@ -136,7 +136,7 @@ jobs:
 
           old = """struct sockaddr_in sao;
             sao.sin_family = AF_INET;
-            sao.sin_addr.s_addr = gethostid();
+            sao.sin_addr.s_addr = htonl(INADDR_ANY);
             sao.sin_port = htons(port);"""
 
           new = """struct sockaddr_in sao;
