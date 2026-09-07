@@ -25,6 +25,26 @@ jobs:
           grep -n 'const int port' ChirunoMod/soos/main.cpp || true
           grep -n 'soc_service_buf_siz' ChirunoMod/soos/main.cpp || true
 
+      - name: Reduce Old3DS ChirunoMod heap
+        run: |
+          python3 - <<'PYHEAP'
+          from pathlib import Path
+
+          p = Path("ChirunoMod/soos/_init.c")
+          s = p.read_text()
+
+          old = "u32 mem = APPMEMTYPE > 5 ? 0x320000 : 0x64000;"
+          new = "u32 mem = APPMEMTYPE > 5 ? 0x320000 : 0x50000;"
+
+          if old not in s:
+              raise SystemExit("Old3DS heap target not found")
+
+          p.write_text(s.replace(old, new, 1))
+          print("ARLO: Old3DS heap reduced 0x64000 -> 0x50000")
+          PYHEAP
+
+          grep -n "u32 mem =" ChirunoMod/soos/_init.c
+
       - name: Install host tools
         run: |
           sudo apt-get update
