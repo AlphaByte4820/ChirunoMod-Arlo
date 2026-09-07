@@ -428,7 +428,11 @@ jobs:
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
-          make -j2
+          echo "===== ARLO INADDR_ANY PATCH ====="
+sed -i 's/sao\.sin_addr\.s_addr = gethostid();/sao.sin_addr.s_addr = htonl(INADDR_ANY);/' soos/main.cpp
+grep -n 'sao.sin_addr.s_addr' soos/main.cpp
+
+make -j2
 
       - name: Show build output
         run: |
