@@ -366,15 +366,14 @@ jobs:
           path: ArloSocketTest-legacy/ArloSocketTest.3dsx
 
       - name: Build patched ChirunoMod
-        working-directory: ChirunoMod
-        run: |
-          # Old libjpeg-turbo 1.4.2 collides with newer devkitARM stdlib random()
-          # Disable ARM SIMD for this legacy JPEG build; ChirunoMod does not need
-          # the old jsimd_arm path for our networking test.
-          sed -i 's/^JSIMD_ARM=.*/JSIMD_ARM=/' Makefile 2>/dev/null || true
-          make -j2
+      working-directory: ChirunoMod
+      run: |
+        echo "===== ARLO INADDR_ANY PATCH ====="
+        sed -i 's/sao\.sin_addr\.s_addr = gethostid();/sao.sin_addr.s_addr = htonl(INADDR_ANY);/' soos/main.cpp
+        grep -n 'sao.sin_addr.s_addr' soos/main.cpp
+        make -j2
 
-      - name: Show build output
+    - name: Show build output
         run: |
           find ChirunoMod -maxdepth 2 \
             \( -name "*.cia" -o -name "*.elf" \) \
