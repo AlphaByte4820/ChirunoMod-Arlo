@@ -88,7 +88,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           apt-get update
-          apt-get install -y unzip
+          apt-get install -y unzip gh
 
           mkdir -p /tmp/makerom-release
           cd /tmp/makerom-release
