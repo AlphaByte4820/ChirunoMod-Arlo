@@ -104,6 +104,28 @@ jobs:
           print("ARLO SOCKET DIAGNOSTICS ADDED")
           PY2
 
+      - name: Bind ChirunoMod to all interfaces
+        run: |
+          python3 - <<'PY2'
+          p = "ChirunoMod/soos/main.cpp"
+
+          with open(p) as f:
+              s = f.read()
+
+          old = "sao.sin_addr.s_addr = gethostid();"
+          new = "sao.sin_addr.s_addr = htonl(INADDR_ANY);"
+
+          if old not in s:
+              raise SystemExit("ARLO: bind-address target not found")
+
+          s = s.replace(old, new, 1)
+
+          with open(p, "w") as f:
+              f.write(s)
+
+          print("ARLO: changed listener address from gethostid() to INADDR_ANY")
+          PY2
+
       - name: Show patched section
         run: |
           sed -n '2190,2210p' ChirunoMod/soos/main.cpp
