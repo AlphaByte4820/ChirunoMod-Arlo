@@ -19,129 +19,11 @@ jobs:
             https://github.com/ChainSwordCS/ChirunoMod.git \
             ChirunoMod
 
-      - name: Apply Arlo Old3DS socket test
+      - name: Verify stock ChirunoMod networking
         run: |
-          python3 - <<'PY'
-          p = "ChirunoMod/soos/main.cpp"
-
-          with open(p, "r") as f:
-              lines = f.readlines()
-
-          found_poll = False
-          found_accept = False
-
-          for i, line in enumerate(lines):
-              if "else if(pollsock(sock, POLLIN) == POLLIN)" in line:
-                  lines[i] = line.replace(
-                      "else if(pollsock(sock, POLLIN) == POLLIN)",
-                      "else"
-                  )
-                  found_poll = True
-
-              if "else if(pollsock(sock, POLLERR) == POLLERR)" in line:
-                  lines[i] = line.replace(
-                      "else if(pollsock(sock, POLLERR) == POLLERR)",
-                      "if(false)"
-                  )
-
-              if "int cli = accept(sock, (struct sockaddr*)&sai, &sizeof_sai);" in line:
-                  indent = line[:len(line) - len(line.lstrip())]
-                  lines[i] = (
-                      indent + "sizeof_sai = sizeof(sai);\n" +
-                      indent + "int cli = accept(sock, (struct sockaddr*)&sai, &sizeof_sai);\n"
-                  )
-                  found_accept = True
-
-          if not found_poll or not found_accept:
-              raise SystemExit(
-                  f"Patch target missing: pollsock={found_poll}, accept={found_accept}"
-              )
-
-          with open(p, "w") as f:
-              f.writelines(lines)
-
-          print("Arlo socket patch applied")
-          PY
-
-      - name: Add Arlo socket diagnostics
-        run: |
-          python3 - <<'PY2'
-          p = "ChirunoMod/soos/main.cpp"
-
-          with open(p, "r") as f:
-              s = f.read()
-
-          s = s.replace(
-              "sock = r;",
-              """sock = r;
-              printf("ARLODBG socket=%i errno=%i %s\\n", sock, errno, strerror(errno));""",
-              1
-          )
-
-          old_bind = """if(bind(sock, (struct sockaddr*)&sao, sizeof(sao)) < 0)"""
-          new_bind = """int arlo_bind_ret = bind(sock, (struct sockaddr*)&sao, sizeof(sao));
-              printf("ARLODBG bind=%i errno=%i %s\\n", arlo_bind_ret, errno, strerror(errno));
-              if(arlo_bind_ret < 0)"""
-
-          if old_bind not in s:
-              raise SystemExit("BIND TARGET NOT FOUND")
-
-          s = s.replace(old_bind, new_bind, 1)
-
-          old_listen = """if(listen(sock, 1) < 0)"""
-          new_listen = """int arlo_listen_ret = listen(sock, 1);
-                  printf("ARLODBG listen=%i errno=%i %s\\n", arlo_listen_ret, errno, strerror(errno));
-                  if(arlo_listen_ret < 0)"""
-
-          if old_listen not in s:
-              raise SystemExit("LISTEN TARGET NOT FOUND")
-
-          s = s.replace(old_listen, new_listen, 1)
-
-          with open(p, "w") as f:
-              f.write(s)
-
-          print("ARLO SOCKET DIAGNOSTICS ADDED")
-          PY2
-
-      - name: Bind ChirunoMod to all interfaces
-        run: |
-          python3 - <<'PY2'
-          p = "ChirunoMod/soos/main.cpp"
-
-
-          print("ARLO: changed listener address from gethostid() to INADDR_ANY")
-          PY2
-
-      - name: Zero initialize ChirunoMod sockaddr
-        run: |
-          python3 - <<'PY2'
-          p = "ChirunoMod/soos/main.cpp"
-
-          with open(p) as f:
-              s = f.read()
-
-          target = "struct sockaddr_in sao;"
-
-          if target not in s:
-              raise SystemExit("ARLO: sockaddr declaration not found")
-
-          s = s.replace(
-              target,
-              target + "\n            memset(&sao, 0, sizeof(sao));",
-              1
-          )
-
-          with open(p, "w") as f:
-              f.write(s)
-
-          print("ARLO: sockaddr zero initialization inserted")
-          PY2
-
-      - name: Show patched section
-        run: |
-          sed -n '2190,2210p' ChirunoMod/soos/main.cpp
-
+          echo "ARLO: using stock ChirunoMod v0.2.2 networking"
+          grep -n 'const int port' ChirunoMod/soos/main.cpp || true
+          grep -n 'soc_service_buf_siz' ChirunoMod/soos/main.cpp || true
 
       - name: Install host tools
         run: |
@@ -360,7 +242,7 @@ jobs:
           # Disable ARM SIMD for this legacy JPEG build; ChirunoMod does not need
           # the old jsimd_arm path for our networking test.
           sed -i 's/^JSIMD_ARM=.*/JSIMD_ARM=/' Makefile 2>/dev/null || true
-          sed -i 's/soc_service_buf_siz = 0x20000;/soc_service_buf_siz = 0x100000;/' soos/main.cpp
+          echo 'ARLO: leaving stock SOC buffer at 0x20000'
           grep -n 'soc_service_buf_siz' soos/main.cpp
           make -j2
 
@@ -418,7 +300,7 @@ jobs:
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
-          sed -i 's/soc_service_buf_siz = 0x20000;/soc_service_buf_siz = 0x100000;/' soos/main.cpp
+          echo 'ARLO: leaving stock SOC buffer at 0x20000'
           grep -n 'soc_service_buf_siz' soos/main.cpp
           make -j2
 
