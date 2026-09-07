@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Clone Luma
         run: |
-          git clone --branch v14.0 --depth 1 https://github.com/LumaTeam/Luma3DS.git Luma3DS
+          git clone --branch v13.4 --depth 1 https://github.com/LumaTeam/Luma3DS.git Luma3DS
 
       - name: Patch InputRedirection to HID only
         run: |
