@@ -339,6 +339,32 @@ jobs:
           makerom -h >/dev/null || true
           bannertool --help >/dev/null || true
 
+      - name: Build ArloSocketTest with legacy toolchain
+        run: |
+          rm -rf ArloSocketTest-legacy
+
+          git clone --depth 1 \
+            https://github.com/AlphaByte4820/ArloSocketTest.git \
+            ArloSocketTest-legacy
+
+          echo "===== LEGACY TOOLCHAIN ====="
+          arm-none-eabi-gcc --version | head -1
+
+          echo "DEVKITPRO=$DEVKITPRO"
+          echo "DEVKITARM=$DEVKITARM"
+
+          echo "===== BUILDING LEGACY SOCKET TEST ====="
+          make -C ArloSocketTest-legacy
+
+          echo "===== RESULT ====="
+          ls -lh ArloSocketTest-legacy/ArloSocketTest.3dsx
+
+      - name: Upload legacy ArloSocketTest
+        uses: actions/upload-artifact@v4
+        with:
+          name: ArloSocketTest-legacy-${{ github.run_number }}
+          path: ArloSocketTest-legacy/ArloSocketTest.3dsx
+
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
         run: |
