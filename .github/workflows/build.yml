@@ -352,30 +352,6 @@ jobs:
           name: ArloSocketTest-legacy-${{ github.run_number }}
           path: ArloSocketTest-legacy/ArloSocketTest.3dsx
 
-      - name: Pause after ChirunoMod listen
-        run: |
-          python3 - <<'PY2'
-          p = "ChirunoMod/soos/main.cpp"
-
-          with open(p) as f:
-              s = f.read()
-
-          target = "\nreloop:\n"
-
-          if target not in s:
-              raise SystemExit("ARLO: reloop marker not found")
-
-          s = s.replace(
-              target,
-              "\n// ARLO diagnostic: keep listener alive before accept logic\nsvcSleepThread(30000000000LL);\n\nreloop:\n",
-              1
-          )
-
-          with open(p, "w") as f:
-              f.write(s)
-
-          print("ARLO: inserted 30-second post-listen pause")
-          PY2
 
       - name: Build patched ChirunoMod
         working-directory: ChirunoMod
