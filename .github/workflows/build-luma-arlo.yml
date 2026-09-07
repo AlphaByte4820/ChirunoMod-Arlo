@@ -1,0 +1,90 @@
+name: Build Arlo Luma HID-only
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-luma-arlo.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: devkitpro/devkitarm:latest
+
+    steps:
+      - name: Clone Luma3DS v14.0
+        run: |
+          git clone --branch v14.0 --depth 1 \
+            https://github.com/LumaTeam/Luma3DS.git \
+            Luma3DS
+
+      - name: Make InputRedirection HID-only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("Luma3DS/sysmodules/rosalina/source/input_redirection.c")
+          s = p.read_text()
+
+          start = s.index("Result InputRedirection_DoOrUndoPatches(void)")
+          end = s.index("Result InputRedirection_Disable", start)
+
+          replacement = r'''Result InputRedirection_DoOrUndoPatches(void)
+{
+    static bool hidPatched = false;
+
+    Handle hidProcHandle = 0;
+
+    // Pause system HID while applying/removing the patch.
+    svcKernelSetState(0x10000, 4);
+
+    Result res = OpenProcessByName("hid", &hidProcHandle);
+
+    if(R_SUCCEEDED(res))
+    {
+        res = InputRedirection_DoUndoHidPatches(
+            hidProcHandle,
+            !hidPatched
+        );
+
+        if(R_SUCCEEDED(res))
+            hidPatched = !hidPatched;
+    }
+
+    svcKernelSetState(0x10000, 4);
+
+    if(hidProcHandle)
+        svcCloseHandle(hidProcHandle);
+
+    return res;
+}
+
+'''
+
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s)
+
+          print("ARLO: InputRedirection patched to HID-only")
+          PY
+
+          grep -n -A40 "Result InputRedirection_DoOrUndoPatches" \
+            Luma3DS/sysmodules/rosalina/source/input_redirection.c
+
+      - name: Build Luma
+        working-directory: Luma3DS
+        run: |
+          make -j2
+
+      - name: Show result
+        run: |
+          ls -lh Luma3DS/boot.firm
+
+      - name: Upload Arlo Luma
+        uses: actions/upload-artifact@v4
+        with:
+          name: Arlo-Luma-v14-HID-only-${{ github.run_number }}
+          path: Luma3DS/boot.firm
+          if-no-files-found: error
