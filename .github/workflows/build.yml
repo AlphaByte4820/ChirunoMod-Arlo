@@ -397,7 +397,10 @@ jobs:
           # Disable ARM SIMD for this legacy JPEG build; ChirunoMod does not need
           # the old jsimd_arm path for our networking test.
           sed -i 's/^JSIMD_ARM=.*/JSIMD_ARM=/' Makefile 2>/dev/null || true
-          make -j2
+          # ARLO: pause for 30 seconds immediately before reloop
+        sed -i '/^[[:space:]]*reloop:/i\\    svcSleepThread(30000000000LL); // ARLO LISTEN TEST' soos/main.cpp
+        grep -n -B2 -A2 'ARLO LISTEN TEST' soos/main.cpp
+        make -j2
 
       - name: Show build output
         run: |
