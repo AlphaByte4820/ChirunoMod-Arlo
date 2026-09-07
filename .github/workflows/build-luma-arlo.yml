@@ -83,6 +83,21 @@ jobs:
           grep -n -A35 "Result InputRedirection_DoOrUndoPatches" \
             Luma3DS/sysmodules/rosalina/source/input_redirection.c
 
+      - name: Install makerom
+        run: |
+          apt-get update
+          apt-get install -y wget unzip
+
+          wget -q             https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.19.0/makerom-v0.19.0-linux_x86_64.zip             -O /tmp/makerom.zip
+
+          unzip -q /tmp/makerom.zip -d /tmp/makerom
+
+          MAKEROM="$(find /tmp/makerom -type f -name makerom | head -1)"
+          chmod +x "$MAKEROM"
+          cp "$MAKEROM" /usr/local/bin/makerom
+
+          makerom -h >/dev/null || true
+
       - name: Build Luma
         working-directory: Luma3DS
         run: |
