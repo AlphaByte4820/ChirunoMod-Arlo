@@ -75,6 +75,16 @@ jobs:
 
           p.write_text(s[:start] + replacement + s[end:])
 
+          # HID-only build leaves the original IR helper present,
+          # so mark it intentionally unused to satisfy -Werror.
+          s = s.replace(
+              "static Result InputRedirection_DoUndoIrPatches(",
+              "static Result __attribute__((unused)) InputRedirection_DoUndoIrPatches(",
+              1
+          )
+
+          p.write_text(s)
+
           print("ARLO: HID-only InputRedirection patch applied")
           PY
 
