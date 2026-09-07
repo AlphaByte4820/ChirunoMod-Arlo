@@ -83,43 +83,22 @@ jobs:
           grep -n -A35 "Result InputRedirection_DoOrUndoPatches" \
             Luma3DS/sysmodules/rosalina/source/input_redirection.c
 
-      - name: Install makerom
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Build makerom from source
         run: |
           apt-get update
-          apt-get install -y unzip gh
+          apt-get install -y git build-essential
 
-          mkdir -p /tmp/makerom-release
-          cd /tmp/makerom-release
+          git clone --depth 1             https://github.com/3DSGuy/Project_CTR.git             /tmp/Project_CTR
 
-          ASSET="$(gh release view makerom-v0.19.0 \
-            --repo 3DSGuy/Project_CTR \
-            --json assets \
-            -q '.assets[].name' | grep -Ei 'linux|ubuntu' | head -1)"
+          cd /tmp/Project_CTR/makerom
 
-          echo "Using makerom asset: $ASSET"
-
-          if [ -z "$ASSET" ]; then
-            echo "No Linux makerom asset found"
-            gh release view makerom-v0.19.0 \
-              --repo 3DSGuy/Project_CTR \
-              --json assets \
-              -q '.assets[].name'
-            exit 1
-          fi
-
-          gh release download makerom-v0.19.0 \
-            --repo 3DSGuy/Project_CTR \
-            --pattern "$ASSET"
-
-          unzip -o "$ASSET" >/dev/null 2>&1 || true
-          tar -xf "$ASSET" >/dev/null 2>&1 || true
+          make deps
+          make -j2
 
           MAKEROM="$(find . -type f -name makerom | head -1)"
 
           if [ -z "$MAKEROM" ]; then
-            echo "makerom binary not found"
+            echo "makerom build output not found"
             find . -maxdepth 3 -type f -print
             exit 1
           fi
@@ -127,8 +106,9 @@ jobs:
           chmod +x "$MAKEROM"
           cp "$MAKEROM" /usr/local/bin/makerom
 
-          echo "makerom installed:"
+          echo "makerom built locally:"
           which makerom
+          ldd /usr/local/bin/makerom || true
 
       - name: Build Luma
         working-directory: Luma3DS
